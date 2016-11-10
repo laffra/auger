@@ -1,5 +1,7 @@
 from collections import defaultdict
 
+# This code is horrible and needs cleanup, just prototyping an idea for now
+
 def dump(tests, mocks):
   getFilename = lambda code: code.co_filename.split('/')[-1]
   getLineno = lambda code: code.co_firstlineno
