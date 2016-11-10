@@ -82,7 +82,7 @@ This produces the following automatically generated unit test for pet.py:
         unittest.main()
 
 Note that auger detects object creation, method invocation, and static methods. As
-the getSpecies method is defined by the superclass we mock it out, and make it return
+the getSpecies method is defined by the superclass, we mock it out, and make it return
 'Parrot', as that is what our test execution produced.
 
 By automatically generating unit tests, we dramatically cut down the cost of software 
