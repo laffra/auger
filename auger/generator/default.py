@@ -10,7 +10,7 @@ def dump(tests, mocks):
   getObjectId = lambda obj: '%s:%s' % (type(obj).__name__, id(obj))
   getModname = lambda filename: filename.replace('.py','')
   isObject = lambda obj: isinstance(obj, object) and not isinstance(obj, str)
-  getAssert = lambda value: 'IsInstance' if isObject(value) else 'Equals'
+  getAssert = lambda value: 'IsInstance' if isObject(value) else 'Equal'
   getAssertValue = lambda value: type(value).__name__ if isObject(value) else repr(value)
 
   imports = set(['import unittest', 'from unittest.mock import patch'])
