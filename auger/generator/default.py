@@ -1,7 +1,5 @@
 from collections import defaultdict
 
-# This code is horrible and needs cleanup, just prototyping an idea for now
-
 def dump(tests, mocks):
   getFilename = lambda code: code.co_filename.split('/')[-1]
   getLineno = lambda code: code.co_firstlineno
@@ -10,7 +8,7 @@ def dump(tests, mocks):
   getObjectId = lambda obj: '%s:%s' % (type(obj).__name__, id(obj))
   getModname = lambda filename: filename.replace('.py','')
   isObject = lambda obj: isinstance(obj, object) and not isinstance(obj, str)
-  getAssert = lambda value: 'IsInstance' if isObject(value) else 'Equal'
+  getAssert = lambda value: 'IsInstance' if isObject(value) else 'Equals'
   getAssertValue = lambda value: type(value).__name__ if isObject(value) else repr(value)
 
   imports = set(['import unittest', 'from unittest.mock import patch'])
@@ -29,22 +27,27 @@ def dump(tests, mocks):
         for _,calls in function.calls.items():
           for (args,returnValue) in calls:
             self = args['self']
-            imports.add('from %s import %s' % (getModname(filename), type(self).__name__))
+            imports.add('from %s import %s' % (
+              getModname(filename), type(self).__name__)
+            )
             del args['self']
             instances[getObjectId(self)] = (type(self).__name__, args)
       else:
         mockArgs = ''
-        for (mockCode,mock) in function.mocks[:1]:
+        uniqueMocks = set((c.co_name,m) for c,m in function.mocks)
+        for (mockCode,mock) in uniqueMocks:
           args,returnValue = list(mock.calls.values())[0][0]
           self = args.get('self')
           output.append('  @patch.object(%s, \'%s\')' % (
-            type(self).__name__, mockCode.co_name
+              type(self).__name__, mockCode
           ))
-          mockArgs += ', mock_%s' % mockCode.co_name
+          mockArgs += ', mock_%s' % mockCode
         output.append('  def test_%s(self%s):' % (code.co_name, mockArgs))
-        for (mockCode,mock) in function.mocks[:1]:
+        for (mockCode,mock) in uniqueMocks:
           args,returnValue = list(mock.calls.values())[0][0]
-          output.append('    mock_%s.return_value = %s' % (mockCode.co_name, repr(returnValue)))
+          output.append('    mock_%s.return_value = %s' % (
+              mockCode, repr(returnValue))
+          )
         for (_,calls) in list(function.calls.items())[:1]:
           for (args,returnValue) in calls[:1]:
             self = args.get('self')
