@@ -1,15 +1,10 @@
-import animal
 import pet
 
-import auger
-
 def main():
-  p = pet.createPet("Polly", "Parrot")
-  print(p, p.getName(), p.getSpecies())
+  clifford = pet.createPet('Clifford', 'Dog', 12)
+  print('Clifford is %d years old.' % clifford.getAge())
+  print(clifford)
 
-  p = pet.createPet("Clifford", "Dog")
-  print(p, p.getName(), p.getSpecies())
-
-if __name__ == "__main__":
-  with auger.UnittestGenerator(pet):
-    main() 
+import auger
+with auger.magic(pet):
+  main()
