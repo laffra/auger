@@ -7,7 +7,7 @@ from collections import defaultdict
 from . import runtime
 from . import generator
 
-class UnittestGenerator(object):
+class magic(object):
   _filenames = {}
   _calls = defaultdict(runtime.Function)
   _mocks = defaultdict(runtime.Function)
