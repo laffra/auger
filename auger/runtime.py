@@ -7,12 +7,12 @@ class Function(object):
     self.work = []
     self.mocks = []
 
-  def handleCall(self, args):
+  def handle_call(self, args):
     self.work.append(args)
       
-  def handleReturn(self, args, value):
+  def handle_return(self, args, value):
     callArgs = self.work.pop()
     self.calls[repr(callArgs)].append((callArgs,value))
 
-  def addMock(self, mock):
+  def add_mock(self, mock):
     self.mocks.append(mock)
