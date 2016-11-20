@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 def dump(tests, mocks):
-  getFilename = lambda code: code.co_filename.split('/')[-1]
+  getFilename = lambda code: code.co_filename.split('/')[-1].split('\\')[-1]
   getLineno = lambda code: code.co_firstlineno
   getLocation = lambda code: '%s:%s' % (getFilename(code), getLineno(code))
   getTestname = lambda filename: filename.replace('.py','').capitalize() + 'Test'

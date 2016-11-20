@@ -1,4 +1,4 @@
-import pet
+from sample import pet
 
 def main():
   clifford = pet.createPet('Clifford', 'Dog', 12)
