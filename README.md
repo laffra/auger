@@ -1,6 +1,9 @@
 # auger
 Auger is a project to automatically generate unit tests for Python code. 
 
+See [this blog](http://chrislaffra.blogspot.com/2016/12/auger-automatic-unit-test-generation.html)
+entry for more information.
+
 Consider the following example, pet.py, that lets us create a Pet with a name and a species:
 
     from animal import Animal
@@ -53,32 +56,38 @@ We would say:
 
     import auger
     if __name__ == "__main__":
-      with auger.UnittestGenerator(pet):
+      with auger.magic(pet):
         main() 
 
 This produces the following automatically generated unit test for pet.py:
 
-      from pet import Pet
-      from unittest.mock import patch
-      import animal
-      import pet
-      import unittest
+    from mock import patch
+    from sample.animal import Animal
+    import sample.pet
+    from sample.pet import Pet
+    import unittest
 
-      class PetTest(unittest.TestCase):
-        @patch.object(Pet, 'getSpecies')
-        def test___str__(self, mock_getSpecies):
-          mock_getSpecies.return_value = 'Parrot'
-          _pet = Pet(species='Parrot',name='Polly')
-          self.assertEquals(_pet.__str__(), 'Polly is a Parrot')
 
-        def test_createPet(self):
-          self.assertIsInstance(pet.createPet(species='Parrot',name='Polly'), Pet)
+    class PetTest(unittest.TestCase):
+        @patch.object(Animal, 'get_species')
+        @patch.object(Animal, 'get_age')
+        def test___str__(self, mock_get_age, mock_get_species):
+            mock_get_age.return_value = 12
+            mock_get_species.return_value = 'Dog'
+            pet_instance = Pet('Clifford', 'Dog', 12)
+            self.assertEquals(pet_instance.__str__(), 'Clifford is a dog aged 12')
 
-        def test_getName(self):
-          _pet = Pet(species='Parrot',name='Polly')
-          self.assertEquals(_pet.getName(), 'Polly')
+        def test_create_pet(self):
+            self.assertIsInstance(sample.pet.create_pet(age=12,species='Dog',name='Clifford'), Pet)
 
-      if __name__ == "__main__":
+        def test_get_name(self):
+            pet_instance = Pet('Clifford', 'Dog', 12)
+            self.assertEquals(pet_instance.get_name(), 'Clifford')
+
+        def test_lower(self):
+            self.assertEquals(Pet.lower(s='Dog'), 'dog')
+
+    if __name__ == "__main__":
         unittest.main()
 
 Note that auger detects object creation, method invocation, and static methods. As
