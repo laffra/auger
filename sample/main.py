@@ -1,12 +1,12 @@
 import auger
-from sample import pet
+from sample import animal, pet
 
 
-def main() -> object:
+def main():
     clifford = pet.create_pet('Clifford', 'Dog', 12)
-    print('Clifford is %d years old.' % clifford.get_age())
+    print('This dog is %d years old.' % clifford.get_age())
     print(clifford)
 
 
-with auger.magic([pet]):
+with auger.magic([pet, animal]):
     main()

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import os
 import sys
 
@@ -5,6 +7,7 @@ from collections import defaultdict
 
 from auger import runtime
 from auger.generator.default import DefaultGenerator
+from auger.generator.generator import get_module_name
 
 
 class magic(object):
@@ -18,11 +21,11 @@ class magic(object):
     def _handle_call(self, code, locals_dict, args, caller=None):
         function = self._calls[code]
         if caller:
-            self._calls[caller].add_mock((code, function))
-        function.handle_call(locals_dict)
+            self._calls[caller].add_mock(code, function)
+        function.handle_call(code, locals_dict)
 
     def _handle_return(self, code, locals_dict, args, caller=None):
-        self._calls[code].handle_return(locals_dict, args)
+        self._calls[code].handle_return(code, locals_dict, args)
 
     def _handle_line(self, code, locals_dict, args, caller=None):
         pass
@@ -35,7 +38,24 @@ class magic(object):
 
     def __exit__(self, exception_type, value, tb):
         sys.settrace(None)
-        print(self.generator_.dump(self._file_names, self._calls))
+        subjects = self.group_by_file(self._file_names, self._calls)
+        for filename, functions in subjects.items():
+            modname = get_module_name(filename)
+            root = filename
+            for _ in modname.split('.'):
+                root = os.path.dirname(root)
+            output = os.path.normpath('%s/tests/test_%s.py' % (root, modname.replace('.', '_')))
+            with open(output, 'w') as f:
+                f.write(self.generator_.dump(filename, functions))
+
+    @staticmethod
+    def group_by_file(file_names, function_calls):
+        files = defaultdict(list)
+        for code, function in function_calls.items():
+            file_name = os.path.normpath(code.co_filename)
+            if file_name in file_names:
+                files[file_name].append((code, function))
+        return files
 
     def _trace(self, frame, event, args):
         handler = getattr(self, '_handle_' + event)
