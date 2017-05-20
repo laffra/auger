@@ -1,7 +1,10 @@
 # auger
 Auger is a project to automatically generate unit tests for Python code. 
 
-See [this blog](http://chrislaffra.blogspot.com/2016/12/auger-automatic-unit-test-generation.html)
+See
+[these slides](http://goo.gl/PuZsgX) 
+or
+[this blog](http://chrislaffra.blogspot.com/2016/12/auger-automatic-unit-test-generation.html)
 entry for more information.
 
 Consider the following example, pet.py, that lets us create a Pet with a name and a species:

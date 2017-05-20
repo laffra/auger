@@ -23,5 +23,5 @@ class Generator(object):
     def __init__(self):
         init_module_names()
 
-    def dump(self, file_name, functions):
+    def dump(self, file_name, module, functions):
         pass

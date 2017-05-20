@@ -1,4 +1,5 @@
 import inspect
+import random
 import sys
 
 from auger.generator.generator import Generator
@@ -15,9 +16,15 @@ class DefaultGenerator(Generator):
         self.output_ = []
         self.imports_ = set([('unittest',)])
 
-    def dump(self, filename, functions):
+    def dump(self, filename, module, functions):
         self.output_ = []
         self.dump_tests(filename, functions)
+        for line in inspect.getsourcelines(module)[0]:
+            line = line.replace('\n', '')
+            if line.startswith('import '):
+                self.imports_.add((line.replace('import ', ''),))
+            if line.startswith('from '):
+                self.imports_.add(tuple(line.replace('from ', '').replace('import ','').split(' ')))
         return '\n'.join(self.format_imports() + self.output_)
 
     def format_imports(self):
@@ -30,7 +37,7 @@ class DefaultGenerator(Generator):
         instances = {}
         for code, function in filter(lambda fn: fn[0].co_name == '__init__', functions):
             for _, calls in function.calls.items():
-                for (args, return_value) in calls:
+                for (args, return_value) in calls[:1]:
                     func_self = args['self']
                     func_self_type = func_self.__class__
                     for base in func_self.__class__.__bases__:
@@ -49,22 +56,24 @@ class DefaultGenerator(Generator):
     def get_mock_args(mocks):
         return ''.join([', mock_%s' % code.co_name for (code, mock) in mocks])
 
-    @staticmethod
-    def get_defining_item(code):
-        for name, mod in sys.modules.iteritems():
+    def get_defining_item(self, code):
+        for modname, mod in sys.modules.iteritems():
             file = getattr(mod, '__file__', '').replace('.pyc', '.py')
             if file == code.co_filename:
-                for name,clazz in inspect.getmembers(mod, predicate=inspect.isclass):
+                for classname,clazz in inspect.getmembers(mod, predicate=inspect.isclass):
                     for name,member in inspect.getmembers(clazz, predicate=inspect.ismethod):
                         filename = member.im_func.func_code.co_filename
                         lineno = member.im_func.func_code.co_firstlineno
                         if filename == code.co_filename and lineno == code.co_firstlineno:
+                            self.imports_.add((modname, clazz.__name__))
                             return clazz, member
                     for name,member in inspect.getmembers(clazz, predicate=inspect.isfunction):
                         filename = member.func_code.co_filename
                         lineno = member.func_code.co_firstlineno
                         if filename == code.co_filename and lineno == code.co_firstlineno:
+                            self.imports_.add((modname, clazz.__name__))
                             return clazz, member
+                self.imports_.add((modname,))
                 return mod, mod
 
     def dump_mock_decorators(self, mocks):
@@ -101,7 +110,7 @@ class DefaultGenerator(Generator):
 
     def dump_call(self, filename, code, instances, call):
         definer, member = self.get_defining_item(code)
-        for (args, return_value) in call[:1]:
+        for (args, return_value) in call:
             func_self = args.get('self')
             if inspect.ismethod(member):
                 typename, init, init_args = self.get_instance(instances, func_self)
@@ -112,13 +121,20 @@ class DefaultGenerator(Generator):
                 self.add_import(filename)
                 target = definer.__name__
 
-            self.output_.append(indent(2) + 'self.assert%s(%s.%s(%s), %s)' % (
-                self.get_assert(return_value),
-                target,
-                code.co_name,
-                ','.join(['%s=%s' % (k, repr(v)) for k, v in args.items()]),
-                self.get_assert_value(return_value)
-            ))
+            self.output_.append(''.join([
+                indent(2),
+                'self.assert%s(\n' % self.get_assert(return_value),
+                indent(3),
+                '%s.%s(%s),\n' % (
+                    target,
+                    code.co_name,
+                    ','.join(['%s=%s' % (k, repr(v)) for k, v in args.items()]),
+                ),
+                indent(3),
+                '%s\n' % self.get_assert_value(return_value),
+                indent(2),
+                ')'
+            ]))
             self.output_.append('')
 
     def dump_tests(self, filename, functions):
@@ -134,7 +150,7 @@ class DefaultGenerator(Generator):
                 self.dump_mock_decorators(mocks)
                 self.output_.append(indent(1) + 'def test_%s(self%s):' % (code.co_name, self.get_mock_args(mocks)))
                 self.dump_mock_return_values(mocks)
-                self.dump_call(filename, code, instances, list(function.calls.values())[0])
+                self.dump_call(filename, code, instances, random.choice(list(function.calls.values())))
 
         self.output_.append('if __name__ == "__main__":')
         self.output_.append(indent(1) + 'unittest.main()')
@@ -176,4 +192,7 @@ class DefaultGenerator(Generator):
 
     @staticmethod
     def get_assert_value(value):
-        return type(value).__name__ if DefaultGenerator.is_object(value) else repr(value)
+        value = type(value).__name__ if DefaultGenerator.is_object(value) else repr(value)
+        return value.replace("<type '", '').replace("'>", '')
+
+

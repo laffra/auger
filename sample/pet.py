@@ -2,8 +2,8 @@ from sample.animal import Animal
 
 
 class Pet(Animal):
-    def __init__(self, name, *args):
-        Animal.__init__(self, *args)
+    def __init__(self, name, species, age=0):
+        Animal.__init__(self, species, age)
         self._name = name
 
     def get_name(self):

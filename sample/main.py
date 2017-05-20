@@ -8,5 +8,4 @@ def main():
     print(clifford)
 
 
-with auger.magic([pet, animal]):
-    main()
+main()
