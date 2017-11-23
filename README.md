@@ -59,7 +59,7 @@ We would say:
 
     import auger
     if __name__ == "__main__":
-      with auger.magic(pet):
+      with auger.magic([pet]):
         main() 
 
 This produces the following automatically generated unit test for pet.py:
