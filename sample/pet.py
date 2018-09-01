@@ -1,4 +1,4 @@
-from sample.animal import Animal
+from animal import Animal
 
 
 class Pet(Animal):

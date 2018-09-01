@@ -1,5 +1,5 @@
 import auger
-from sample import animal, pet
+import animal, pet
 
 
 def main():
@@ -8,4 +8,5 @@ def main():
     print(clifford)
 
 
-main()
+with auger.magic([animal, pet]):
+    main()
