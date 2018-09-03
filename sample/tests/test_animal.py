@@ -11,17 +11,20 @@ class AnimalTest(unittest.TestCase):
             12
         )
 
-        animal_instance = Animal('Dog', 12)
-        self.assertEquals(
-            animal_instance.get_age(),
-            12
-        )
 
         animal_instance = Animal('Dog', 12)
         self.assertEquals(
             animal_instance.get_age(),
             12
         )
+
+
+        animal_instance = Animal('Dog', 12)
+        self.assertEquals(
+            animal_instance.get_age(),
+            12
+        )
+
 
     def test_get_species(self):
         animal_instance = Animal('Dog', 12)
@@ -30,11 +33,13 @@ class AnimalTest(unittest.TestCase):
             'Dog'
         )
 
+
         animal_instance = Animal('Dog', 12)
         self.assertEquals(
             animal_instance.get_species(),
             'Dog'
         )
+
 
 if __name__ == "__main__":
     unittest.main()

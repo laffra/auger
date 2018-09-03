@@ -18,11 +18,13 @@ class PetTest(unittest.TestCase):
             'Clifford is a dog aged 12'
         )
 
+
     def test_create_pet(self):
         self.assertIsInstance(
             pet.create_pet(age=12,name='Clifford',species='Dog'),
             Pet
         )
+
 
     def test_get_name(self):
         pet_instance = Pet('Clifford', 'Dog', 12)
@@ -31,11 +33,13 @@ class PetTest(unittest.TestCase):
             'Clifford'
         )
 
+
     def test_lower(self):
         self.assertEquals(
             Pet.lower(s='Dog'),
             'dog'
         )
+
 
 if __name__ == "__main__":
     unittest.main()
