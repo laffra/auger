@@ -1,7 +1,10 @@
 from __future__ import absolute_import
+from __future__ import print_function
 
+import inspect
 import os
 import sys
+import traceback
 
 from collections import defaultdict
 
@@ -12,12 +15,23 @@ from auger.generator.generator import get_module_name
 
 class magic(object):
     _file_names = None
+    _caller = "???"
     _calls = defaultdict(runtime.Function)
 
-    def __init__(self, modules, generator=None):
-        self._file_names = [os.path.normpath(mod.__file__.replace('.pyc', '.py')) for mod in modules]
-        self._modules = modules
+    def __init__(self, modulesOrClasses, generator=None, verbose=False):
+        self._caller = inspect.stack()[1][1]
+        self._file_names = map(os.path.normpath, map(self._get_file, modulesOrClasses))
         self.generator_ = generator or DefaultGenerator()
+        self.verbose = verbose
+
+    def _get_file(self, moduleOrClass):
+        try:
+            if hasattr(moduleOrClass, "__file__"):
+                return moduleOrClass.__file__.replace('.pyc', '.py')
+            else:
+                return inspect.getfile(moduleOrClass)
+        except:
+            return self._caller
 
     def _handle_call(self, code, locals_dict, args, caller=None):
         function = self._calls[code]
@@ -40,16 +54,26 @@ class magic(object):
 
     def __exit__(self, exception_type, value, tb):
         sys.settrace(None)
-        subjects = self.group_by_file(self._file_names, self._calls)
-        for filename, functions in subjects.items():
-            modname = get_module_name(filename)
-            root = filename
-            for _ in modname.split('.'):
-                root = os.path.dirname(root)
-            output = os.path.normpath('%s/tests/test_%s.py' % (root, modname.replace('.', '_')))
-            with open(output, 'w') as f:
-                module = self._modules[self._file_names.index(filename)]
-                f.write(self.generator_.dump(filename, module, functions))
+        for filename, functions in self.group_by_file(self._file_names, self._calls).items():
+            test = self.generator_.dump(filename, functions)
+            if self.verbose:
+                print('=' * 47 + ' Auger ' + '=' * 46)
+                print(test)
+                print('=' * 100)
+            else:
+                modname = get_module_name(filename)
+                if modname == '__main__':
+                    modname = filename.replace('.py', '').capitalize();
+                root = filename
+                for _ in modname.split('.'):
+                    root = os.path.dirname(root)
+                output = os.path.normpath('%s/tests/test_%s.py' % (root, modname.replace('.', '_')))
+                dir = os.path.dirname(output)
+                if not os.path.exists(dir):
+                    os.makedirs(dir)
+                with open(output, 'w') as f:
+                    f.write(test)
+            print('Auger: generated test: %s' % output)
 
     @staticmethod
     def group_by_file(file_names, function_calls):
@@ -69,5 +93,4 @@ class magic(object):
             handler(frame.f_code, frame.f_locals, args)
         if caller in self._file_names and top != caller:
             handler(frame.f_code, frame.f_locals, args, frame.f_back.f_code)
-
         return self._trace
