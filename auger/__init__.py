@@ -67,7 +67,7 @@ class magic(object):
                 root = filename
                 for _ in modname.split('.'):
                     root = os.path.dirname(root)
-                output = os.path.normpath('%s/tests/test_%s.py' % (root, modname.replace('.', '_')))
+                output = os.path.normpath('%s/tests/test_%s.py' % (root or '.', modname.replace('.', '_')))
                 dir = os.path.dirname(output)
                 if not os.path.exists(dir):
                     os.makedirs(dir)

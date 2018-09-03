@@ -49,7 +49,8 @@ class DefaultGenerator(Generator):
                         for _, init in filter(lambda member: member[0] == '__init__', inspect.getmembers(base)):
                             if init.__code__ == code:
                                 func_self_type = base
-                    self.imports_.add((func_self_type.__module__, func_self_type.__name__))
+                    mod = func_self_type.__module__
+                    self.imports_.add((mod, func_self_type.__name__))
                     instances[self.get_object_id(type(func_self), func_self)] = (func_self_type.__name__, code, args)
         return instances
 
@@ -82,7 +83,8 @@ class DefaultGenerator(Generator):
                 if filename == code.co_filename and lineno == code.co_firstlineno:
                     self.imports_.add((modname, clazz.__name__))
                     return clazz, member
-        self.imports_.add((modname,))
+        if modname != '__main__':
+            self.imports_.add((modname,))
         return mod, mod
 
     def dump_mock_decorators(self, mocks):
