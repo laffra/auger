@@ -14,10 +14,6 @@ Install auger with:
     pip install auger-python
 
 # Running Auger
-
-Install auger with:
-
-    pip install auger-python
     
 To generate a unit test for any class or module, for Python 2 or 3, do this:
 
