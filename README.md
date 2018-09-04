@@ -36,7 +36,7 @@ Here is a simple example that does not rely on Auger at all:
 
     main()
 
-Inside the main function we call the method and verifies it prints 64.
+Inside the `main` function we call the `bar` method and it will print 64.
 
 # Running Auger on our Simple Example
 
