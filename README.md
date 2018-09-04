@@ -15,7 +15,7 @@ Install auger with:
 
 # Running Auger
 
-To generate a unit test for any class or module, run your sample code using Auger as follows:
+To generate a unit test for any class or module, for Python 2 or 3, run your sample code using Auger as follows:
 
     import auger
 
@@ -69,18 +69,19 @@ The test that is generated looks like this, with some imports and test for main 
 
 # Running Auger in verbose mode
 
-Rather than emit tests in the file system, Auger can also print out the test to the console.
-Use the following parameter:
+Rather than emit tests in the file system, Auger can also print out the test to the console,
+by using the `verbose` parameter:
 
     import auger
 
     with auger.magic([Foo], verbose=True):
         main()
 
+In that case, Auger will not generate any tests, but just print them out.
 
 # A larger example
 
-Consider the following example, pet.py, that lets us create a Pet with a name and a species:
+Consider the following example, `pet.py`, included in the `sample` folder, that lets us create a `Pet` with a name and a species:
 
     from animal import Animal
 
@@ -98,7 +99,7 @@ Consider the following example, pet.py, that lets us create a Pet with a name an
     def createPet(name, species):
       return Pet(name, species)
 
-A Pet is really a special kind of animal, with a name, defined in animal.py.
+A `Pet` is really a special kind of `Animal`, with a name, which is defined in `animal.py`:
 
     class Animal(object):
       def __init__(self, species):
@@ -107,7 +108,7 @@ A Pet is really a special kind of animal, with a name, defined in animal.py.
       def getSpecies(self):
         return self.species
 
-With those two definitions, we can create a Pet and print it out:
+With those two definitions, we can create a `Pet` instance and print out some details:
 
     import animal
     import pet
@@ -115,13 +116,18 @@ With those two definitions, we can create a Pet and print it out:
     def main():
       p = pet.createPet("Polly", "Parrot")
       print(p, p.getName(), p.getSpecies())
+      
+    main()      
 
 This produces:
 
     Polly is a Parrot Polly Parrot
 
-With auger, we can record all calls to all functions and methods defined in pet.py,
-while trapping all calls going out from pet.py to other modules.
+# Calling Auger on our larger example
+
+With Auger, we can record all calls to all functions and methods defined in `pet.py`,
+while also remembering the details for all calls going out from `pet.py` to other modules,
+so they can be mocked out.
 
 Instead of saying:
 
@@ -131,11 +137,12 @@ Instead of saying:
 We would say:
 
     import auger
+    
     if __name__ == "__main__":
       with auger.magic([pet]):   # this is the new line and invokes Auger
         main()
 
-This produces the following automatically generated unit test for pet.py:
+This produces the following automatically generated unit test for `pet.py`:
 
     from mock import patch
     from sample.animal import Animal
@@ -166,9 +173,21 @@ This produces the following automatically generated unit test for pet.py:
     if __name__ == "__main__":
         unittest.main()
 
-Note that auger detects object creation, method invocation, and static methods. As
-the getSpecies method is defined by the superclass, we mock it out, and make it return
-'Parrot', as that is what our test execution produced.
+Note that auger detects object creation, method invocation, and static methods. It automatically
+generate mocks for `Animal`. The mock for `get_species` returns 'Dog' and `get_age` returns 12. 
+Namely, those were the values Auger recorded when we ran our sample code the last time.
+
+# Benefits of Auger
 
 By automatically generating unit tests, we dramatically cut down the cost of software
-development.
+development. The tests themselves are intended to help developers get going on their unit testing
+and lower the learning curve for how to write tests.
+
+# Known limitations of Auger
+
+Auger does not do try to substitue parameters with synthetic values such as `-1`, `None`, or `[]`. 
+Auger also does not act well when code uses exceptions. Auger also does not like methods that have a decorator.
+
+Auger only records a given execution run and saves the run as a test. Auger does not know if the code actually
+works as intended. If the code contains a bug, Auger will simply record the buggy behavior. There is no free
+lunch here. It is up to the developer to verify the code actually works.
