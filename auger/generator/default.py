@@ -47,7 +47,7 @@ class DefaultGenerator(Generator):
                     func_self_type = func_self.__class__
                     for base in func_self.__class__.__bases__:
                         for _, init in filter(lambda member: member[0] == '__init__', inspect.getmembers(base)):
-                            if init.__code__ == code:
+                            if getattr(init, "__code__", None) == code:
                                 func_self_type = base
                     mod = func_self_type.__module__
                     self.imports_.add((mod, func_self_type.__name__))
