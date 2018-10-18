@@ -22,16 +22,30 @@ class magic(object):
         self._caller = inspect.stack()[1][1]
         self._file_names = map(os.path.normpath, map(self._get_file, modulesOrClasses))
         self.generator_ = generator or DefaultGenerator()
+        self.modulesOrClasses = set(modulesOrClasses)
         self.verbose = verbose
 
+    def should_test(self, code):
+        for parent in self.modulesOrClasses:
+            for _,func in inspect.getmembers(parent, inspect.ismethod):
+                if func.im_func.func_code == code:
+                    return True
+            for _,clazz in inspect.getmembers(parent, inspect.isclass):
+                for _,func in inspect.getmembers(clazz, inspect.ismethod):
+                    if func.im_func.func_code == code:
+                        return True
+        return False
+
     def _get_file(self, moduleOrClass):
+        file = self._caller
         try:
             if hasattr(moduleOrClass, "__file__"):
-                return moduleOrClass.__file__.replace('.pyc', '.py')
+                file = moduleOrClass.__file__
             else:
-                return inspect.getfile(moduleOrClass)
+                file = inspect.getfile(moduleOrClass)
         except:
-            return self._caller
+            pass
+        return file.replace('.pyc', '.py')
 
     def _handle_call(self, code, locals_dict, args, caller=None):
         function = self._calls[code]
@@ -73,15 +87,14 @@ class magic(object):
                     os.makedirs(dir)
                 with open(output, 'w') as f:
                     f.write(test)
-            print('Auger: generated test: %s' % output)
+                print('Auger: generated test: %s' % output)
 
-    @staticmethod
-    def group_by_file(file_names, function_calls):
+    def group_by_file(self, file_names, function_calls):
         file_names = set(file_names)
         files = defaultdict(list)
         for code, function in function_calls.items():
             file_name = os.path.normpath(code.co_filename)
-            if file_name in file_names:
+            if file_name in file_names and self.should_test(code):
                 files[file_name].append((code, function))
         return files
 

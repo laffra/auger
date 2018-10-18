@@ -14,7 +14,7 @@ class Pet(Animal):
         return s.lower()
 
     def __str__(self):
-        return '%s is a %s aged %d' % (self.get_name(), Pet.lower(self.get_species()), self.get_age())
+        return '%s %s is a %s aged %d' % (self.get_complex_object().__class__.__name__, self.get_name(), Pet.lower(self.get_species()), self.get_age())
 
 
 def create_pet(name, species, age=0):
@@ -22,5 +22,5 @@ def create_pet(name, species, age=0):
 
 
 if __name__ == '__main__':
-    print(Pet('Polly', 'Parrot'))
     print(create_pet('Clifford', 'Dog', 32))
+    print(Pet('Polly', 'Parrot'))

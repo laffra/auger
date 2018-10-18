@@ -1,11 +1,22 @@
 class Foo:            # Declare a class with a method
-  def bar(self, x):
+  def foo(self, x):
     return 2 * x
 
-def test():
-  foo = Foo()           # Create an instance of Foo
-  print(foo.bar(32))    # Print 64
+  def foo_get(self):
+    return Bar.bar_get()
 
-import auger
-with auger.magic([Foo]):
-  test()
+
+class Bar:
+  @staticmethod
+  def bar_get():
+    return Bar()
+
+
+def main():
+  foo = Foo()           # Create an instance of Foo
+  print(foo.foo(32))    # 64
+  print(foo.foo_get())  # Bar instance
+
+
+if __name__ == '__main__':
+  main()

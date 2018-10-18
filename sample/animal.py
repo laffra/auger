@@ -12,6 +12,9 @@ class Animal(object):
   def get_age(self):
     return self._age
 
+  def get_complex_object(self):
+    return random.Random()
+
   def __str__(self):
     return '%s:%s' % (self._species, self._age)
 
