@@ -1,22 +1,22 @@
-import auger
 import foo
 from foo import Foo
 import unittest
 
 
 class FooTest(unittest.TestCase):
-    def test_bar(self):
+    def test_foo(self):
         foo_instance = Foo()
         self.assertEquals(
-            foo_instance.bar(x=32),
+            foo_instance.foo(x=32),
             64
         )
 
 
-    def test_test(self):
-        self.assertEquals(
-            foo.test(),
-            None
+    def test_foo_get(self):
+        foo_instance = Foo()
+        self.assertIsInstance(
+            foo_instance.foo_get(),
+            foo.Bar
         )
 
 
