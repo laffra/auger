@@ -12,8 +12,11 @@ class Language(object):
   def age(self):
     return 26
 
-if __name__ == '__main__':
+def main():
   with auger.magic([Language]):
     language = Language()
     print(language.name)
     print(language.age())
+
+if __name__ == '__main__':
+  main()

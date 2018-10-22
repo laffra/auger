@@ -11,13 +11,13 @@ import unittest
 
 
 class PetTest(unittest.TestCase):
-    @patch.object(Animal, 'get_species')
     @patch.object(Animal, 'get_age')
     @patch.object(Animal, 'get_complex_object')
-    def test___str__(self, mock_get_complex_object, mock_get_age, mock_get_species):
+    @patch.object(Animal, 'get_species')
+    def test___str__(self, mock_get_species, mock_get_complex_object, mock_get_age):
+        mock_get_species.return_value = 'Dog'
         mock_get_complex_object.return_value = Random()
         mock_get_age.return_value = 12
-        mock_get_species.return_value = 'Dog'
         pet_instance = Pet('Clifford', 'Dog', 12)
         self.assertEquals(
             pet_instance.__str__(),

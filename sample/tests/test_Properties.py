@@ -1,5 +1,5 @@
-import __main__
 import auger
+import properties
 from properties import Language
 import unittest
 
