@@ -30,6 +30,9 @@ class magic(object):
             for _,func in inspect.getmembers(parent, inspect.ismethod):
                 if func.im_func.func_code == code:
                     return True
+            for _,prop in inspect.getmembers(parent, lambda member: isinstance(member, property)):
+                if prop.fget.func_code == code:
+                    return True
             for _,clazz in inspect.getmembers(parent, inspect.isclass):
                 for _,func in inspect.getmembers(clazz, inspect.ismethod):
                     if func.im_func.func_code == code:
