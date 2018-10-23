@@ -6,6 +6,7 @@ import types
 
 from auger.generator.generator import Generator
 from auger.generator.generator import get_module_name
+from auger import runtime
 
 
 def indent(n):
@@ -36,10 +37,10 @@ class DefaultGenerator(Generator):
             if len(imp) == 2 and imp[0] != '__main__':
                 return 'from %s import %s' % imp
             return 'import %s' % imp[0]
-        return map(format, imports)
+        return list(map(format, imports))
 
     def collect_instances(self, functions):
-        for code, function in filter(lambda fn: fn[0].co_name == '__init__', functions):
+        for code, function in filter(lambda fn: runtime.get_code_name(fn[0]) == '__init__', functions):
             for _, calls in function.calls.items():
                 for (args, _) in calls[:1]:
                     func_self = args['self']
@@ -58,33 +59,37 @@ class DefaultGenerator(Generator):
 
     @staticmethod
     def get_mock_args(mocks):
-        return ''.join([', mock_%s' % code.co_name for (code, mock) in mocks])
+        return ''.join([', mock_%s' % runtime.get_code_name(code) for (code, mock) in mocks])
 
     def find_module(self, code):
         for modname, mod in sys.modules.items():
             file = getattr(mod, '__file__', '').replace('.pyc', '.py')
-            if file == code.co_filename:
+            if file == runtime.get_code_filename(code):
                 if modname == "__main__":
                     modname = file.replace(".py", "").replace("/", ".")
                 self.imports_.add((modname,))
                 return modname, mod
 
     def get_defining_item(self, code):
+        filename = runtime.get_code_filename(code)
+        lineno = runtime.get_code_lineno(code)
         modname, mod = self.find_module(code)
         for _,clazz in inspect.getmembers(mod, predicate=inspect.isclass):
             for _,member in inspect.getmembers(clazz, predicate=inspect.ismethod):
-                filename = member.im_func.func_code.co_filename
-                lineno = member.im_func.func_code.co_firstlineno
-                if filename == code.co_filename and lineno == code.co_firstlineno:
+                member_code = runtime.get_code(member)
+                member_filename = runtime.get_code_filename(member_code)
+                member_lineno = runtime.get_code_lineno(member_code)
+                if filename == member_filename and lineno == member_lineno:
                     self.imports_.add((modname, clazz.__name__))
                     return clazz, member
             for _,member in inspect.getmembers(clazz, predicate=lambda member: isinstance(member, property)):
                 self.imports_.add((modname, clazz.__name__))
                 return clazz, member
             for _,member in inspect.getmembers(clazz, predicate=inspect.isfunction):
-                filename = member.func_code.co_filename
-                lineno = member.func_code.co_firstlineno
-                if filename == code.co_filename and lineno == code.co_firstlineno:
+                member_code = runtime.get_code(member)
+                member_filename = runtime.get_code_filename(member_code)
+                member_lineno = runtime.get_code_filename(member_code)
+                if filename == member_filename and lineno == member_lineno:
                     self.imports_.add((modname, clazz.__name__))
                     return clazz, member
         if modname != '__main__':
@@ -97,7 +102,7 @@ class DefaultGenerator(Generator):
             definer, member = self.get_defining_item(code)
             self.imports_.add(('mock', 'patch'))
             self.output_.insert(last_position, indent(1) + '@patch.object(%s, \'%s\')' % (
-                definer.__name__, code.co_name))
+                definer.__name__, runtime.get_code_name(code)))
 
     def dump_mock_return_values(self, mocks):
         for (code, mock) in mocks:
@@ -110,7 +115,7 @@ class DefaultGenerator(Generator):
                     return_value = self.get_initializer(*instance)
                 else:
                     return_value = "None # TODO: fix mock for %s()" % return_value
-            self.output_.append(indent(2) + 'mock_%s.return_value = %s' % (code.co_name, return_value))
+            self.output_.append(indent(2) + 'mock_%s.return_value = %s' % (runtime.get_code_name(code), return_value))
 
     def dump_create_instance(self, typename, code, init_args):
         self.output_.append(indent(2) + '%s_instance = %s' % (typename.lower(), self.get_initializer(typename, code, init_args)))
@@ -141,13 +146,14 @@ class DefaultGenerator(Generator):
             if isinstance(member, property) or inspect.ismethod(member):
                 typename, init, init_args = self.get_instance(self.instances, func_self)
                 self.dump_create_instance(typename, init, init_args)
-                del args['self']
+                if 'self' in args:
+                    del args['self']
                 target = '%s_instance' % typename.lower()
             else:
                 self.add_import(filename)
                 target = definer.__name__
 
-            call = '%s.%s' % (target, code.co_name)
+            call = '%s.%s' % (target, runtime.get_code_name(code))
             if inspect.ismethod(member):
                 call += '(%s)' % (
                     ','.join(['%s=%s' % (k, repr(v)) for k, v in args.items()]),
@@ -171,13 +177,13 @@ class DefaultGenerator(Generator):
         self.output_.append('')
         self.output_.append('')
         self.output_.append('class %s(unittest.TestCase):' % self.get_testname(filename))
-        functions = filter(lambda fn: fn[0].co_name != '__init__', functions)
-        functions = sorted(functions, key=lambda fn: fn[0].co_name)
+        functions = filter(lambda fn: runtime.get_code_name(fn[0]) != '__init__', functions)
+        functions = sorted(functions, key=lambda fn: runtime.get_code_name(fn[0]))
         for code, function in functions:
             if function.calls:
                 mocks = self.get_mocks(function)
                 self.dump_mock_decorators(mocks)
-                self.output_.append(indent(1) + 'def test_%s(self%s):' % (code.co_name, self.get_mock_args(mocks)))
+                self.output_.append(indent(1) + 'def test_%s(self%s):' % (runtime.get_code_name(code), self.get_mock_args(mocks)))
                 self.dump_mock_return_values(mocks)
                 try:
                     self.dump_call(filename, code, random.choice(list(function.calls.values())))
@@ -189,7 +195,7 @@ class DefaultGenerator(Generator):
 
     @staticmethod
     def get_filename(code):
-        return DefaultGenerator.shorten_filename(code.co_filename)
+        return DefaultGenerator.shorten_filename(runtime.get_code_filename(code))
 
     @staticmethod
     def shorten_filename(filename):
@@ -220,7 +226,7 @@ class DefaultGenerator(Generator):
 
     @staticmethod
     def get_assert(value):
-        return 'IsInstance' if DefaultGenerator.is_object(value) else 'Equals'
+        return 'IsInstance' if DefaultGenerator.is_object(value) else 'Equal'
 
     @staticmethod
     def get_full_class_name(value):

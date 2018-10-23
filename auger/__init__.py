@@ -20,7 +20,7 @@ class magic(object):
 
     def __init__(self, modulesOrClasses, generator=None, verbose=False):
         self._caller = inspect.stack()[1][1]
-        self._file_names = map(os.path.normpath, map(self._get_file, modulesOrClasses))
+        self._file_names = list(map(os.path.normpath, list(map(self._get_file, modulesOrClasses))))
         self.generator_ = generator or DefaultGenerator()
         self.modulesOrClasses = set(modulesOrClasses)
         self.verbose = verbose
@@ -31,12 +31,13 @@ class magic(object):
                 if func.im_func.func_code == code:
                     return True
             for _,prop in inspect.getmembers(parent, lambda member: isinstance(member, property)):
-                if prop.fget.func_code == code:
+                if getattr(prop.fget, "func_code", None) or getattr(prop.fget, "__code__") == code:
                     return True
             for _,clazz in inspect.getmembers(parent, inspect.isclass):
-                for _,func in inspect.getmembers(clazz, inspect.ismethod):
-                    if func.im_func.func_code == code:
-                        return True
+                for name,func in inspect.getmembers(clazz, inspect.isfunction):
+                    if name in clazz.__dict__:
+                        if getattr(func, "__code__", None) or func.im_func.func_code == code:
+                            return True
         return False
 
     def _get_file(self, moduleOrClass):

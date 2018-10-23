@@ -13,10 +13,9 @@ class Language(object):
     return 26
 
 def main():
-  with auger.magic([Language]):
-    language = Language()
-    print(language.name)
-    print(language.age())
+  language = Language()
+  print("Language:", language.name)
+  print("Language:", language.age())
 
 if __name__ == '__main__':
   main()
