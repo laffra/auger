@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="auger-python",
-    version="0.1.30",
+    version="0.1.31",
     author="Chris Laffra",
     author_email="laffra@gmail.com",
     description="Automatically generate unit tests for Python code",
