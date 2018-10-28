@@ -2,3 +2,4 @@ auger.egg-info
 auger_python.egg-info
 build
 dist
+*.pyc
