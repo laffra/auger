@@ -90,7 +90,7 @@ class DefaultGenerator(Generator):
             for _,member in inspect.getmembers(clazz, predicate=inspect.isfunction):
                 member_code = runtime.get_code(member)
                 member_filename = runtime.get_code_filename(member_code)
-                member_lineno = runtime.get_code_filename(member_code)
+                member_lineno = runtime.get_code_lineno(member_code)
                 if filename == member_filename and lineno == member_lineno:
                     self.imports_.add((modname, clazz.__name__))
                     return clazz, member
