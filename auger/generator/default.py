@@ -33,6 +33,7 @@ class DefaultGenerator(Generator):
 
     def format_imports(self):
         imports = sorted(self.imports_)
+        imports.remove(('auger',))
         def format(imp):
             if len(imp) == 2 and imp[0] != '__main__':
                 return 'from %s import %s' % imp
