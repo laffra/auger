@@ -26,19 +26,7 @@ class magic(object):
         self.verbose = verbose
 
     def should_test(self, code):
-        for parent in self.modulesOrClasses:
-            for _,func in inspect.getmembers(parent, inspect.ismethod):
-                if func.im_func.func_code == code:
-                    return True
-            for _,prop in inspect.getmembers(parent, lambda member: isinstance(member, property)):
-                if getattr(prop.fget, "func_code", None) or getattr(prop.fget, "__code__") == code:
-                    return True
-            for _,clazz in inspect.getmembers(parent, inspect.isclass):
-                for name,func in inspect.getmembers(clazz, inspect.isfunction):
-                    if name in clazz.__dict__:
-                        if getattr(func, "__code__", None) or func.im_func.func_code == code:
-                            return True
-        return False
+        return True
 
     def _get_file(self, moduleOrClass):
         file = self._caller
