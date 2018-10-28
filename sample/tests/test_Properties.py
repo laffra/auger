@@ -1,13 +1,10 @@
 import animal
 from animal import Animal
-import auger
-import foo
 from mock import patch
-import pet
-from pet import Pet
 import properties
 from properties import Language
 import random
+from random import Random
 import unittest
 
 
@@ -15,7 +12,7 @@ class PropertiesTest(unittest.TestCase):
     def test_age(self):
         language_instance = Language()
         self.assertEqual(
-            language_instance.age,
+            language_instance.age(),
             26
         )
 
