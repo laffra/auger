@@ -1,11 +1,6 @@
 import animal
 from animal import Animal
-import foo
-from foo import Bar
-from foo import Foo
 from mock import patch
-import properties
-from properties import Language
 import random
 from random import Random
 import unittest

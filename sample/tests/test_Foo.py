@@ -1,13 +1,23 @@
+import animal
+from animal import Animal
 import foo
 from foo import Bar
 from foo import Foo
+from mock import patch
+import pet
+from pet import Animal
+from pet import Pet
+import properties
+from properties import Language
+import random
+from random import Random
 import unittest
 
 
 class FooTest(unittest.TestCase):
     def test_bar_get(self):
         self.assertIsInstance(
-            Bar.bar_get,
+            Bar.bar_get(),
             foo.Bar
         )
 
@@ -30,7 +40,7 @@ class FooTest(unittest.TestCase):
 
     def test_main(self):
         self.assertEqual(
-            foo.main,
+            foo.main(),
             None
         )
 
