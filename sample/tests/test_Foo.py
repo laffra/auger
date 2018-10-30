@@ -3,7 +3,11 @@ from animal import Animal
 import foo
 from foo import Bar
 from foo import Foo
+import functions
+import genericpath
+from genericpath import unicode
 from mock import patch
+import os
 import pet
 from pet import Animal
 from pet import Pet
