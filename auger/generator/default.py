@@ -153,7 +153,10 @@ class DefaultGenerator(Generator):
         definer, member = self.get_defining_item(code)
         for (args, return_value) in call:
             func_self = args.get('self')
+            is_func   = inspect.isfunction(member)
+            is_method = inspect.ismethod(member)
             is_static = isinstance(definer.__dict__.get(runtime.get_code_name(code)), staticmethod)
+            is_mod    = isinstance(definer, types.ModuleType)
             if isinstance(member, property) or inspect.ismethod(member):
                 if not is_static:
                     typename, init, init_args = self.get_instance(self.instances, func_self)
@@ -174,14 +177,14 @@ class DefaultGenerator(Generator):
             # print 'member: ', member
             # print 'target: ', target
             # print 'name:   ', runtime.get_code_name(code)
-            # print 'ismod?: ', isinstance(definer, types.ModuleType)
+            # print 'ismod?: ', is_mod
             # print 'static?:', is_static
-            # print 'method?:', inspect.ismethod(member)
-            # print 'func?:  ', inspect.isfunction(member)
+            # print 'method?:', is_method
+            # print 'func?:  ', is_func
             # print '-' * 80
 
             call = '%s.%s' % (target, runtime.get_code_name(code))
-            if inspect.ismethod(member) or inspect.isfunction(member) or is_static:
+            if is_method or is_func or is_static or is_mod:
                 call += '(%s)' % (
                     ','.join(['%s=%s' % (k, repr(v)) for k, v in args.items()]),
                 )
