@@ -12,7 +12,6 @@ from auger import runtime
 def indent(n):
     return '    ' * n
 
-
 class DefaultGenerator(Generator):
     def __init__(self):
         Generator.__init__(self)
@@ -20,15 +19,19 @@ class DefaultGenerator(Generator):
         self.imports_ = set([('unittest',)])
         self.instances = {}
 
+    def set_extra_imports(self, imports):
+        for imp in imports:
+            self.imports_.add(imp)
+
     def dump(self, filename, functions):
         self.output_ = []
         self.dump_tests(filename, functions)
         for line in open(filename):
             line = line.replace('\n', '')
             if line.startswith('import '):
-                self.imports_.add((line.replace('import ', ''),))
+                self.add_import(line.replace('import ', ''))
             if line.startswith('from '):
-                self.imports_.add(tuple(line.replace('from ', '').replace('import ','').split(' ')))
+                self.add_import(*(line.replace('from ', '').replace('import ','').split(' ')))
         return '\n'.join(self.format_imports() + self.output_)
 
     def format_imports(self):
@@ -36,9 +39,11 @@ class DefaultGenerator(Generator):
         if ('auger',) in imports:
             imports.remove(('auger',))
         def format(imp):
-            if len(imp) == 2 and imp[0] != '__main__':
-                return 'from %s import %s' % imp
-            return 'import %s' % imp[0]
+            mod = self.get_declared_module_name(imp[0])
+            if len(imp) == 2:
+                if mod != '__main__':
+                    return 'from %s import %s' % (mod, imp[1])
+            return 'import %s' % mod
         return list(map(format, imports))
 
     def collect_instances(self, functions):
@@ -52,7 +57,7 @@ class DefaultGenerator(Generator):
                             if getattr(init, "__code__", None) == code:
                                 func_self_type = base
                     mod = func_self_type.__module__
-                    self.imports_.add((mod, func_self_type.__name__))
+                    self.add_import(mod, func_self_type.__name__)
                     self.instances[self.get_object_id(type(func_self), func_self)] = (func_self_type.__name__, code, args)
 
     @staticmethod
@@ -69,7 +74,7 @@ class DefaultGenerator(Generator):
             if file == runtime.get_code_filename(code):
                 if modname == "__main__":
                     modname = file.replace(".py", "").replace("/", ".")
-                self.imports_.add((modname,))
+                self.add_import(modname)
                 return modname, mod
 
     def get_defining_item(self, code):
@@ -82,17 +87,17 @@ class DefaultGenerator(Generator):
                 member_filename = runtime.get_code_filename(member_code)
                 member_lineno = runtime.get_code_lineno(member_code)
                 if filename == member_filename and lineno == member_lineno:
-                    self.imports_.add((modname, clazz.__name__))
+                    self.add_import(modname, clazz.__name__)
                     return clazz, member
             for _,member in inspect.getmembers(clazz, predicate=lambda member: isinstance(member, property)):
-                self.imports_.add((modname, clazz.__name__))
+                self.add_import(modname, clazz.__name__)
                 return clazz, member
             for _,member in inspect.getmembers(clazz, predicate=inspect.isfunction):
                 member_code = runtime.get_code(member)
                 member_filename = runtime.get_code_filename(member_code)
                 member_lineno = runtime.get_code_lineno(member_code)
                 if filename == member_filename and lineno == member_lineno:
-                    self.imports_.add((modname, clazz.__name__))
+                    self.add_import(modname, clazz.__name__)
                     return clazz, member
             for _,member in inspect.getmembers(mod, predicate=inspect.isfunction):
                 # Module-level function support, note the difference in return statement
@@ -100,19 +105,19 @@ class DefaultGenerator(Generator):
                 member_filename = runtime.get_code_filename(member_code)
                 member_lineno = runtime.get_code_lineno(member_code)
                 if filename == member_filename and lineno == member_lineno:
-                    self.imports_.add((modname, clazz.__name__))
+                    self.add_import(modname, clazz.__name__)
                     return mod, member
         if modname != '__main__':
-            self.imports_.add((modname,))
+            self.add_import(modname)
         return mod, mod
 
     def dump_mock_decorators(self, mocks):
         last_position = len(self.output_)
         for (code, mock) in mocks:
             definer, member = self.get_defining_item(code)
-            self.imports_.add(('mock', 'patch'))
+            self.add_import('mock', 'patch')
             self.output_.insert(last_position, indent(1) + '@patch.object(%s, \'%s\')' % (
-                definer.__name__, runtime.get_code_name(code)))
+                self.get_declared_module_name(definer.__name__), runtime.get_code_name(code)))
 
     def dump_mock_return_values(self, mocks):
         for (code, mock) in mocks:
@@ -142,9 +147,6 @@ class DefaultGenerator(Generator):
             params = ""
         return '%s(%s)' % (typename, params)
 
-    def add_import(self, filename):
-        self.imports_.add((self.get_modname(filename),))
-
     def get_instance(self, instances, func_self):
         _type = type(func_self)
         return instances.get(self.get_object_id(_type, func_self)) or (func_self.__class__.__name__, _type, {})
@@ -160,6 +162,12 @@ class DefaultGenerator(Generator):
             if isinstance(member, property) or inspect.ismethod(member):
                 if not is_static:
                     typename, init, init_args = self.get_instance(self.instances, func_self)
+                    if typename == "NoneType":
+                        self.output_.append(''.join([
+                            indent(2),
+                            'pass\n\n'
+                        ]))
+                        continue
                     self.dump_create_instance(typename, init, init_args)
                     if 'self' in args:
                         del args['self']
@@ -200,7 +208,7 @@ class DefaultGenerator(Generator):
                 ')\n'
             ]))
             self.output_.append('')
-            break;
+            break
 
     def dump_tests(self, filename, functions):
         self.collect_instances(functions)
@@ -222,6 +230,15 @@ class DefaultGenerator(Generator):
 
         self.output_.append('if __name__ == "__main__":')
         self.output_.append(indent(1) + 'unittest.main()\n')
+
+    def add_import(self, module_name, part_name=None):
+        module_name = self.get_declared_module_name(self.get_modname(module_name))
+        if part_name:
+            if module_name in sys.modules:
+                mod = sys.modules[module_name]
+                if not hasattr(mod, part_name):
+                    return
+        self.imports_.add((module_name, part_name) if part_name else (module_name,))
 
     @staticmethod
     def get_filename(code):

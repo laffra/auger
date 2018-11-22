@@ -18,10 +18,12 @@ class magic(object):
     _caller = "???"
     _calls = defaultdict(runtime.Function)
 
-    def __init__(self, modulesOrClasses, generator=None, verbose=False):
+    def __init__(self, modulesOrClasses, generator=None, verbose=False, mock_substitutes=None, extra_imports=None):
         self._caller = inspect.stack()[1][1]
         self._file_names = list(map(os.path.normpath, list(map(self._get_file, modulesOrClasses))))
-        self.generator_ = generator or DefaultGenerator()
+        self._generator = generator or DefaultGenerator()
+        self._generator.set_mock_substitutes(mock_substitutes or {})
+        self._generator.set_extra_imports(extra_imports or {})
         self.modulesOrClasses = set(modulesOrClasses)
         self.verbose = verbose
 
@@ -61,7 +63,7 @@ class magic(object):
     def __exit__(self, exception_type, value, tb):
         sys.settrace(None)
         for filename, functions in self.group_by_file(self._file_names, self._calls).items():
-            test = self.generator_.dump(filename, functions)
+            test = self._generator.dump(filename, functions)
             if self.verbose:
                 print('=' * 47 + ' Auger ' + '=' * 46)
                 print(test)

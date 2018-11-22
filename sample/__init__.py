@@ -14,10 +14,11 @@ class magic(object):
     _file_names = None
     _calls = defaultdict(runtime.Function)
 
-    def __init__(self, modules, generator=None):
+    def __init__(self, modules, generator=None, mock_substitutes={}):
         self._file_names = [os.path.normpath(mod.__file__.replace('.pyc', '.py')) for mod in modules]
         self._modules = modules
-        self.generator_ = generator or DefaultGenerator()
+        self._generator = generator or DefaultGenerator()
+        self._generator.set_mock_substitutes(mock_substitutes)
 
     def _handle_call(self, code, locals_dict, args, caller=None):
         function = self._calls[code]
@@ -49,7 +50,7 @@ class magic(object):
             output = os.path.normpath('%s/tests/test_%s.py' % (root, modname.replace('.', '_')))
             with open(output, 'w') as f:
                 module = self._modules[self._file_names.index(filename)]
-                f.write(self.generator_.dump(filename, module, functions))
+                f.write(self._generator.dump(filename, module, functions))
 
     @staticmethod
     def group_by_file(file_names, function_calls):

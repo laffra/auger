@@ -1,9 +1,12 @@
-import animal
-from animal import Animal
+import foo
+from foo import Bar
+from foo import Foo
+import functions
 from mock import patch
+import os
+import os.path
 import properties
 from properties import Language
-import random
 from random import Random
 import unittest
 
@@ -18,11 +21,7 @@ class PropertiesTest(unittest.TestCase):
 
 
     def test_main(self):
-        nonetype_instance = NoneType()
-        self.assertEqual(
-            nonetype_instance.main,
-            None
-        )
+        pass
 
 
     def test_name(self):

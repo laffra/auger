@@ -1,22 +1,16 @@
-import animal
-from animal import Animal
+import foo
+from foo import Bar
+from foo import Foo
 import functions
-import genericpath
-from genericpath import unicode
 from mock import patch
 import os
-import pet
-from pet import Animal
-from pet import Pet
-import properties
-from properties import Language
-import random
+import os.path
 from random import Random
 import unittest
 
 
 class FunctionsTest(unittest.TestCase):
-    @patch.object(genericpath, 'exists')
+    @patch.object(os.path, 'exists')
     def test_func_one(self, mock_exists):
         mock_exists.return_value = False
         self.assertEqual(
@@ -32,7 +26,7 @@ class FunctionsTest(unittest.TestCase):
         )
 
 
-    @patch.object(genericpath, 'isdir')
+    @patch.object(os.path, 'isdir')
     def test_func_two(self, mock_isdir):
         mock_isdir.return_value = False
         self.assertEqual(
