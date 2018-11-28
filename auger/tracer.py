@@ -3,7 +3,7 @@ from __future__ import print_function
 
 import sys
 
-traces = [];
+traces = []
 
 class Tracer(object):
     depth = 0
