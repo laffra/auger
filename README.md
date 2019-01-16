@@ -31,7 +31,7 @@ Here is a simple example that does not rely on Auger at all:
 ```python
 class Foo:                # Declare a class with a method
     def bar(self, x):
-        return 2 * x .    # Duplicate x and return it
+        return 2 * x      # Duplicate x and return it
 
 def main():
     foo = Foo()           # Create an instance of Foo
