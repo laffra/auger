@@ -31,7 +31,10 @@ class DefaultGenerator(Generator):
             if line.startswith('import '):
                 self.add_import(line.replace('import ', ''))
             if line.startswith('from '):
-                self.add_import(*(line.replace('from ', '').replace('import ','').split(' ')))
+                module  = line.replace('from ', '').split(' import')[0]
+                imports = [import_.strip() for import_ in line.split('import ')[1].split(',')]
+                for import_ in imports:
+                    self.add_import(module, import_)
         return '\n'.join(self.format_imports() + self.output_)
 
     def format_imports(self):
